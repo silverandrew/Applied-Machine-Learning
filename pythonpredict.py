@@ -6,8 +6,12 @@ from sklearn.cross_validation import train_test_split
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.svm import SVC
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.metrics import accuracy_score
 
-f = open("data/hw2cleaneddata.csv")
+
+#f = open("data/hw2cleaneddata.csv")
+f = open("data/hw3data.csv")
 data = np.loadtxt(fname = f, delimiter = ',')
 #print(data)
 X = data[:, 1:]  # select columns 1 through end
@@ -16,9 +20,32 @@ yf = data[:, 0]   # select column 0, the output label
 y = yf.astype(int)
 #print(y)
 
+print "Feature original shape"
+print X.shape
+
+#feature selection
+featureclf = ExtraTreesClassifier()
+X_new = featureclf.fit(X, y).transform(X)
+#print out
+print "Feature importances:"
+print featureclf.feature_importances_  
+print "New Feature shape"
+print X_new.shape
+
+importances = featureclf.feature_importances_
+std = np.std([tree.feature_importances_ for tree in featureclf.estimators_],
+             axis=0)
+indices = np.argsort(importances)[::-1]
+
+# Print the feature ranking
+print("Feature ranking:")
+
+for f in range(10):
+      print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
+
 # Split the dataset in two equal parts
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.5, random_state=0)
+    X_new, y, test_size=0.5, random_state=0)
 
 # Set the parameters by cross-validation
 tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
@@ -51,6 +78,9 @@ for score in scores:
   print("The scores are computed on the full evaluation set.")
   print()
   y_true, y_pred = y_test, clf.predict(X_test)
+  print("Accuracy score: ")
+# get the accuracy
+  print accuracy_score(y_true, y_pred)
   print(classification_report(y_true, y_pred))
   print()
 
